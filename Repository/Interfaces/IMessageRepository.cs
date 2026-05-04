@@ -6,6 +6,7 @@ namespace ChatAppMVC.Repository.Interfaces
     {
         Task AddMessageAsync(Message message);
         Task<List<Message>> GetMessagesAsync(int userId1, int userId2);
+        Task<Message> GetLastMessageAsync(int userId1, int userId2);
         Task SaveChangesAsync();
     }
 }

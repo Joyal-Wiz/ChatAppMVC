@@ -55,5 +55,23 @@ namespace ChatAppMVC.Services.Implementations
                 200
             );
         }
+
+        public async Task<ApiResponse<string>> MarkMessagesAsReadAsync(int currentUserId, int senderId)
+        {
+            var messages = await _messageRepository.GetMessagesAsync(currentUserId, senderId);
+            var unreadMessages = messages.Where(m => m.ReceiverId == currentUserId && !m.IsRead).ToList();
+
+            foreach (var m in unreadMessages)
+            {
+                m.IsRead = true;
+            }
+
+            if (unreadMessages.Any())
+            {
+                await _messageRepository.SaveChangesAsync();
+            }
+
+            return new ApiResponse<string>(true, "Messages marked as read", null, 200);
+        }
     }
 }

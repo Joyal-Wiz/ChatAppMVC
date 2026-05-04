@@ -31,6 +31,17 @@ namespace ChatAppMVC.Repository.Implementations
                 .ToListAsync();
         }
 
+        public async Task<Message> GetLastMessageAsync(int userId1, int userId2)
+        {
+            return await _context.Messages
+                .Where(m =>
+                    (m.SenderId == userId1 && m.ReceiverId == userId2) ||
+                    (m.SenderId == userId2 && m.ReceiverId == userId1)
+                )
+                .OrderByDescending(m => m.SentAt)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

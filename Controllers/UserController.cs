@@ -17,7 +17,8 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetUsers()
     {
-        var result = await _userService.GetAllUsersAsync();
+        var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+        var result = await _userService.GetAllUsersAsync(currentUserId);
         return StatusCode(result.StatusCode, result);
     }
 }

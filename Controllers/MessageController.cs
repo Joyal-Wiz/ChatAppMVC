@@ -37,5 +37,15 @@ namespace ChatAppMVC.Controllers
 
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpPut("read/{userId}")]
+        public async Task<IActionResult> MarkAsRead(int userId)
+        {
+            var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+
+            var result = await _messageService.MarkMessagesAsReadAsync(currentUserId, userId);
+
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

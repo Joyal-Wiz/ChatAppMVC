@@ -9,11 +9,18 @@ namespace ChatAppMVC.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMessageRepository _messageRepository;
+        private readonly IOnlineUserTracker _onlineUserTracker;
         private readonly JwtHelper _jwtHelper;
 
-        public UserService(IUserRepository userRepository, JwtHelper jwtHelper)
+        public UserService(IUserRepository userRepository, 
+            IMessageRepository messageRepository, 
+            IOnlineUserTracker onlineUserTracker, 
+            JwtHelper jwtHelper)
         {
             _userRepository = userRepository;
+            _messageRepository = messageRepository;
+            _onlineUserTracker = onlineUserTracker;
             _jwtHelper = jwtHelper;
         }
 
@@ -55,24 +62,35 @@ namespace ChatAppMVC.Services.Implementations
                 201
             );
         }
-        public async Task<ApiResponse<List<UserResponseDto>>> GetAllUsersAsync()
-{
-    var users = await _userRepository.GetAllUsersAsync();
+        public async Task<ApiResponse<List<UserResponseDto>>> GetAllUsersAsync(int currentUserId)
+        {
+            var users = await _userRepository.GetAllUsersAsync();
+            var response = new List<UserResponseDto>();
 
-    var response = users.Select(u => new UserResponseDto
-    {
-        Id = u.Id,
-        Username = u.Username,
-        Email = u.Email
-    }).ToList();
+            foreach (var u in users)
+            {
+                if (u.Id == currentUserId) continue;
 
-    return new ApiResponse<List<UserResponseDto>>(
-        true,
-        "Users fetched",
-        response,
-        200
-    );
-}
+                var lastMsg = await _messageRepository.GetLastMessageAsync(currentUserId, u.Id);
+
+                response.Add(new UserResponseDto
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    IsOnline = _onlineUserTracker.IsUserOnline(u.Id),
+                    LastMessage = lastMsg?.Content ?? "Click to start chatting",
+                    LastMessageTime = lastMsg?.SentAt
+                });
+            }
+
+            return new ApiResponse<List<UserResponseDto>>(
+                true,
+                "Users fetched",
+                response,
+                200
+            );
+        }
 
         public async Task<ApiResponse<object>> LoginAsync(LoginUserDto dto)
         {

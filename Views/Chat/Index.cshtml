@@ -477,10 +477,30 @@
         .catch(err => console.error("SignalR Connection Error: ", err));
 
     // SignalR Events
+    connection.on("UserStatusChanged", (userId, isOnline) => {
+        const userItem = document.querySelector(`.user-item[data-id="${userId}"]`);
+        if (userItem) {
+            // This is just a visual update, a reload of users would be more accurate
+            // but for now we'll just handle it live
+            loadUsers(); 
+        }
+        
+        if (userId === currentReceiverId) {
+            document.getElementById("chatUserStatus").innerText = isOnline ? "online" : "offline";
+        }
+    });
+
     connection.on("ReceiveMessage", (senderId, message) => {
         if (senderId === currentReceiverId) {
             appendMessage(senderId, message);
             connection.invoke("MarkAsRead", currentUserId, senderId);
+            
+            // PERSIST READ STATUS
+            fetch(`/api/messages/read/${senderId}`, {
+                method: "PUT",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
             scrollToBottom();
         } else {
             // Play sound if not the active chat
@@ -534,14 +554,21 @@
             const div = document.createElement("div");
             div.className = "user-item";
             div.dataset.id = u.id;
+            
+            const timeStr = u.lastMessageTime ? new Date(u.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+            const statusColor = u.isOnline ? "var(--accent-color)" : "transparent";
+
             div.innerHTML = `
-                <div class="profile-img">${u.username[0].toUpperCase()}</div>
+                <div style="position: relative;">
+                    <div class="profile-img">${u.username[0].toUpperCase()}</div>
+                    <div style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: ${statusColor}; border-radius: 50%; border: 2px solid var(--sidebar-bg);"></div>
+                </div>
                 <div class="user-info">
                     <div class="user-name-row">
                         <span class="user-name">${u.username}</span>
-                        <span class="last-time">12:45 PM</span>
+                        <span class="last-time">${timeStr}</span>
                     </div>
-                    <div class="last-msg">Click to start chatting</div>
+                    <div class="last-msg">${u.lastMessage}</div>
                 </div>
             `;
             div.onclick = () => selectUser(u);

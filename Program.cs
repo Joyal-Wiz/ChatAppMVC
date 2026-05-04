@@ -16,6 +16,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IOnlineUserTracker, OnlineUserTracker>();
 
 // ✅ Database
 builder.Services.AddDbContext<AppDbContext>(options =>
