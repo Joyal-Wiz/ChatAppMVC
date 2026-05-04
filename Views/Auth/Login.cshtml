@@ -1,36 +1,213 @@
-<h2>Login</h2>
+@{
+    ViewData["Title"] = "Login - WhatsApp Clone";
+    Layout = null;
+}
 
-<input type="email" id="email" placeholder="Email" /><br />
-<input type="password" id="password" placeholder="Password" /><br />
-
-<button onclick="login()">Login</button>
-
-<script>
-    async function login() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-
-        const response = await fetch("/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            localStorage.setItem("token", data.data.token);
-            window.location.href = "/Chat/Index";
-        } else {
-            alert(data.message);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #111b21;
+            --accent-color: #00a884;
+            --card-bg: #202c33;
+            --text-primary: #e9edef;
+            --text-secondary: #8696a0;
+            --input-bg: #2a3942;
         }
-    }
-</script>
-<p style="color: green">@ViewBag.Message</p>
 
-<a href="/Auth/Register">Go to Register</a>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 20%, var(--bg-color) 20%, var(--bg-color) 100%);
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            text-align: center;
+            animation: slideUp 0.5s ease;
+        }
+
+        @@keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: #008f6f;
+        }
+
+        .footer-links {
+            margin-top: 25px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        #error-msg {
+            color: #f15c5c;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <i class="fa-brands fa-whatsapp"></i>
+        </div>
+        <h2>Sign In</h2>
+        <p class="subtitle">Welcome back! Please enter your details.</p>
+
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="email" placeholder="Enter your email" />
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••" />
+        </div>
+
+        <button class="login-btn" onclick="login()">Login</button>
+
+        <div id="error-msg"></div>
+
+        <div class="footer-links">
+            Don't have an account? <a href="/Auth/Register">Create Account</a>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const errorMsg = document.getElementById("error-msg");
+
+            if (!email || !password) {
+                showError("Please fill in all fields.");
+                return;
+            }
+
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem("token", data.data.token);
+                    window.location.href = "/Chat/Index";
+                } else {
+                    showError(data.message);
+                }
+            } catch (err) {
+                showError("Something went wrong. Please try again.");
+            }
+        }
+
+        function showError(msg) {
+            const errorMsg = document.getElementById("error-msg");
+            errorMsg.innerText = msg;
+            errorMsg.style.display = "block";
+        }
+    </script>
+</body>
+</html>
