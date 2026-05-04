@@ -1,0 +1,246 @@
+<style>
+.container {
+    display: flex;
+    width: 900px;
+    margin: auto;
+    border: 1px solid #ccc;
+    height: 500px;
+}
+
+.sidebar {
+    width: 30%;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+}
+
+.user {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.chat-area {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* 🔥 CRITICAL FIX */
+.chat-input {
+    display: flex;
+    height: 80px;
+    flex-shrink: 0; /* prevents overlap */
+    border-top: 1px solid #ccc;
+    background: white;
+}
+
+.chat-input textarea {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    resize: none;
+    z-index: 10;
+    position: relative;
+}
+
+.chat-input button {
+    width: 100px;
+    z-index: 10;
+    position: relative;
+    cursor: pointer;
+}
+.chat-input {
+    background: red;
+}
+.chat-box {
+    pointer-events: none;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.container {
+    height: 100vh; /* FULL SCREEN */
+}
+.chat-area {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-input {
+    flex-shrink: 0;
+}
+</style>
+
+<div class="container">
+
+    <div class="sidebar" id="userList"></div>
+
+    <div class="chat-area">
+        <div id="chatTitle">Select a user</div>
+
+        <div id="chatBox" class="chat-box"></div>
+
+        <div class="chat-input">
+            <textarea id="messageInput"></textarea>
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<script>
+// 🔥 HARD DEBUG MODE
+
+const token = localStorage.getItem("token");
+console.log("TOKEN:", token);
+
+if (!token) {
+    alert("NO TOKEN → Login again");
+    throw new Error("Token missing");
+}
+
+let currentUserId;
+try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    currentUserId = parseInt(payload.UserId);
+    console.log("UserId:", currentUserId);
+} catch (e) {
+    alert("Token decode failed");
+    throw e;
+}
+
+let currentReceiverId = null;
+
+// 🔥 SIGNALR
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chatHub")
+    .build();
+
+connection.start()
+    .then(() => console.log("SignalR OK"))
+    .catch(err => console.error("SignalR FAIL", err));
+
+connection.on("ReceiveMessage", (senderId, message) => {
+    console.log("Received:", message);
+    appendMessage(senderId, message);
+});
+
+// 🔥 FUNCTIONS
+
+function appendMessage(senderId, message) {
+    const box = document.getElementById("chatBox");
+
+    const div = document.createElement("div");
+
+    div.innerText = senderId === currentUserId
+        ? "You: " + message
+        : senderId + ": " + message;
+
+    box.appendChild(div);
+}
+
+// LOAD USERS
+async function loadUsers() {
+    console.log("Loading users...");
+
+    const res = await fetch("/api/users", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+    console.log("Users:", data);
+
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+
+    data.data.forEach(u => {
+        if (u.id === currentUserId) return;
+
+        const div = document.createElement("div");
+        div.className = "user";
+        div.innerText = u.username;
+
+        div.onclick = () => {
+            console.log("SELECTED:", u);
+            currentReceiverId = u.id;
+            document.getElementById("chatTitle").innerText = u.username;
+            loadMessages();
+        };
+
+        list.appendChild(div);
+    });
+}
+
+// LOAD MESSAGES
+async function loadMessages() {
+    console.log("Loading messages for:", currentReceiverId);
+
+    const res = await fetch(`/api/messages/${currentReceiverId}`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    const box = document.getElementById("chatBox");
+    box.innerHTML = "";
+
+    data.data.forEach(m => appendMessage(m.senderId, m.content));
+}
+
+// SEND MESSAGE
+document.getElementById("sendBtn").addEventListener("click", async () => {
+    console.log("SEND CLICKED");
+
+    const content = document.getElementById("messageInput").value;
+
+    if (!currentReceiverId) {
+        alert("Select user first");
+        return;
+    }
+
+    if (!content.trim()) {
+        alert("Empty message");
+        return;
+    }
+
+    console.log("Sending:", content);
+
+    await fetch("/api/messages", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            receiverId: currentReceiverId,
+            content: content
+        })
+    });
+
+    await connection.invoke("SendMessage", currentUserId, currentReceiverId, content);
+
+    appendMessage(currentUserId, content);
+
+    document.getElementById("messageInput").value = "";
+});
+
+// INIT
+loadUsers();
+</script>

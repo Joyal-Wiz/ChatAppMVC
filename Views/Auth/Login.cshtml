@@ -1,0 +1,36 @@
+<h2>Login</h2>
+
+<input type="email" id="email" placeholder="Email" /><br />
+<input type="password" id="password" placeholder="Password" /><br />
+
+<button onclick="login()">Login</button>
+
+<script>
+    async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem("token", data.data.token);
+            window.location.href = "/Chat/Index";
+        } else {
+            alert(data.message);
+        }
+    }
+</script>
+<p style="color: green">@ViewBag.Message</p>
+
+<a href="/Auth/Register">Go to Register</a>
