@@ -31,7 +31,7 @@ namespace ChatAppMVC.Controllers
 
         // ✅ API: Register (returns JSON)
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
+        public async Task<IActionResult> Register([FromForm] RegisterUserDto dto)
         {
             var result = await _userService.RegisterAsync(dto);
             return StatusCode(result.StatusCode, result);

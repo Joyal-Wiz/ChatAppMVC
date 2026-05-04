@@ -20,6 +20,7 @@ namespace ChatAppMVC.Helpers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"SERVER ERROR: {ex}");
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 

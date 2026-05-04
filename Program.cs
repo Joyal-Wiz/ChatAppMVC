@@ -3,6 +3,7 @@ using ChatAppMVC.Repository.Interfaces;
 using ChatAppMVC.Repository.Implementations;
 using ChatAppMVC.Services.Interfaces;
 using ChatAppMVC.Services.Implementations;
+using ChatAppMVC.Services;
 using ChatAppMVC.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

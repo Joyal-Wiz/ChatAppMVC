@@ -19,6 +19,11 @@ namespace ChatAppMVC.Repository.Implementations
             await _context.Messages.AddAsync(message);
         }
 
+        public async Task<Message> GetByIdAsync(int id)
+        {
+            return await _context.Messages.FindAsync(id);
+        }
+
         public async Task<List<Message>> GetMessagesAsync(int userId1, int userId2)
         {
             return await _context.Messages

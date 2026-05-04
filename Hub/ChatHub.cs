@@ -24,7 +24,7 @@ namespace ChatAppMVC.Hubs
             await base.OnConnectedAsync();
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userIdStr = Context.User?.FindFirst("UserId")?.Value;
             if (int.TryParse(userIdStr, out int userId))
@@ -38,10 +38,10 @@ namespace ChatAppMVC.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task SendMessage(int senderId, int receiverId, string message)
+        public async Task SendMessage(int senderId, int receiverId, string message, int messageId)
         {
             await Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, message);
+                .SendAsync("ReceiveMessage", senderId, message, messageId);
         }
 
         public async Task NotifyTyping(int senderId, int receiverId, bool isTyping)
@@ -54,6 +54,12 @@ namespace ChatAppMVC.Hubs
         {
             await Clients.User(receiverId.ToString())
                 .SendAsync("MessageRead", senderId);
+        }
+
+        public async Task DeleteMessage(int senderId, int receiverId, int messageId)
+        {
+            await Clients.User(receiverId.ToString())
+                .SendAsync("MessageDeleted", messageId);
         }
     }
 }

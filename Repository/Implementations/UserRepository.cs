@@ -19,6 +19,11 @@ namespace ChatAppMVC.Repository.Implementations
             return await _context.Users
                 .FirstOrDefaultAsync(x => x.Email == email);
         }
+
+        public async Task<User> GetByIdAsync(int id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
         public async Task<List<User>> GetAllUsersAsync()
 {
     return await _context.Users.ToListAsync();

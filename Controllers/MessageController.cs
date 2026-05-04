@@ -47,5 +47,15 @@ namespace ChatAppMVC.Controllers
 
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+
+            var result = await _messageService.DeleteMessageAsync(currentUserId, id);
+
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

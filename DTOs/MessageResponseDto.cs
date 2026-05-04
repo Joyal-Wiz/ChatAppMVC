@@ -1,8 +1,14 @@
-public class MessageResponseDto
+namespace ChatAppMVC.DTOs
 {
-    public int SenderId { get; set; }
-    public string SenderName { get; set; } 
-    public int ReceiverId { get; set; }
-    public string Content { get; set; }
-    public DateTime SentAt { get; set; }
+    public class MessageResponseDto
+    {
+        public int Id { get; set; }
+        public int SenderId { get; set; }
+        public string? SenderName { get; set; } 
+        public int ReceiverId { get; set; }
+        public string? Content { get; set; }
+        public DateTime SentAt { get; set; }
+        public bool IsRead { get; set; }
+        public bool IsDeleted { get; set; }
+    }
 }
